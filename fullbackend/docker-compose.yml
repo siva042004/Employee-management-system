@@ -1,0 +1,34 @@
+version: '3.9'
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: empdb
+      MYSQL_USER: empuser
+      MYSQL_PASSWORD: emppass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/empdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: empuser
+      SPRING_DATASOURCE_PASSWORD: emppass
+      JWT_SECRET: your-256-bit-secret-key-change-in-production-min-32-chars
+      AES_KEY: 0123456789abcdef0123456789abcdef
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
